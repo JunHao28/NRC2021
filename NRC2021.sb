@@ -327,6 +327,7 @@ EndSub
 
 'MAIN FUNCTIONS
 Sub CollectBatteries
+
   'collect batteries
   Motor.StartSync("AD", -75, 75)
   Program.Delay(500)
