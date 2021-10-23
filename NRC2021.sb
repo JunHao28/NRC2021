@@ -306,7 +306,6 @@ EndSub
 Sub readVal
   rawValue = Sensor.ReadRaw(2,3)
   lightVal = rawValue[1]
-  '270 for white '30 for black '460 for white '60 for black '240 for white '20 for black
 EndSub
 Sub readVal2
   rawValue = Sensor.ReadRaw(3,3)
@@ -400,7 +399,7 @@ Sub CollectBatteries
   PIDGyroStraight()
   StopMotor()
   Motor.Move("B", 20, 320, "True")
-  degree = 80
+  degree = 75
   PIDGyroStraight()
   StopMotor()
   target = -90.0
@@ -420,10 +419,10 @@ Sub CollectBatteries
   PIDGyroStraight()
   StopMotor()
   speed = 15
-  target = -55.0
+  target = -60.0
   PIDGyroTurning()
   StopMotor()
-  degree = 290
+  degree = 315
   PIDGyroStraight()
   StopMotor()
   target = 55
@@ -521,7 +520,7 @@ EndSub
 Sub DepositWaitingCars
   Motor.StartSync("AD", -20, 20)
   Program.Delay(1000)
-  waitingCars[1] = "Green"
+  waitingCars[1] = "Blue"
   waitingCars[2] = "Red"
   collecting = "False"
   StopMotor()
@@ -637,20 +636,16 @@ Sub DepositWaitingCars
       PIDGyroStraight()
       StopMotor()
       Motor.StartSync("AD", -50, 50)
-      Program.Delay(3000)
+      Program.Delay(1000)
       Motor.Stop("AD", "True")
       StopMotor()
-      LCD.Clear()
-      LCD.write(1, 1, Sensor.ReadRawValue(1, 0) - 270)
-      Program.Delay(2000)
       target = 90
       PIDGyroTurning()
       If i <> 4 Then
         PIDLineTrackingTillLine()
         StopMotor()
       Else
-        degree = 100
-        PIDGyroReverse()
+        PIDGyroReverseTillLine()
       EndIf
     Else
       If i <> 4 Then
@@ -660,7 +655,7 @@ Sub DepositWaitingCars
       EndIf
     EndIf
   EndFor
-  Turn180()
+  Turn1802()
   Motor.StartSync("BC", -35, -35)
   Program.Delay(2000)
   gyroerror = Sensor.ReadRawValue(1, 0) + 90
@@ -672,87 +667,23 @@ Sub DepositWaitingCars
     colour[2] = Sensor.ReadRawValue(4,0)
     ParkedCarSort()
     If (parkingLots[i] = waitingCars[1] Or parkingLots[i] = waitingCars[2]) And (parkingLot[i] = "Empty") Then
-      degree = 70
-      PIDLineTracking()
-      StopMotor()
-      Program.Delay(500)
-      target = -90.0
-      PIDGyroTurning()
-      StopMotor()
-      Program.Delay(1000)
-      degree = -120
-      speed = 20
-      PIDGyroReverse()
-      StopMotor()
+      deposit = "Right"
       parkingLot[i] = "Waiting Cars"
       If parkingLots[i] = waitingCars[1] Then
         waitingCars[1] = "Placed"
         battery[1] = "Deposited"
-        Motor.StartSync("AD", 20, 20)
-        left = "True"
+        depositSide = "Left"
       Else
         waitingCars[2] = "Placed"
         battery[2] = "Deposited"
-        Motor.StartSync("AD", -20, -20)
-        left = "False"
+        depositSide = "Right"
       EndIf
-      Program.Delay(1000)
-      StopMotor()
-      degree = 50
-      PIDGyroStraight()
-      StopMotor()
       If i = 6 Then
-        degree = 50
-        If left Then
-          battery[1] = "Taken"
-        Else
-          battery[2] = "Taken"
-        EndIf
+        collect1stBatt = "True"
       Else
-        degree = 100
+        collect1stBatt = "False"
       EndIf
-      PIDGyroStraight()
-      StopMotor()
-      Motor.StartSync("AD", -100, 100)
-      Program.Delay(3000)
-      StopMotor()
-      If left Then
-        Motor.Start("A", -120)
-      Else
-        Motor.Start("D", 120)
-      EndIf
-      Program.Delay(1000)
-      PIDGyroStraightTillLine()
-      degree = 35
-      PIDGyroStraight()
-      StopMotor()
-      speed = 15
-      If left Then
-        Motor.Start("A", 120)
-      Else
-        Motor.Start("D", -120)
-      EndIf
-      Program.Delay(500)
-      StopMotor()
-      degree = -70
-      PIDGyroReverse()
-      StopMotor()
-      If left Then
-        Motor.Start("A", -120)
-      Else
-        Motor.Start("D", 120)
-      EndIf
-      Program.Delay(1500)
-      StopMotor()
-      degree = 70 
-      PIDGyroStraight()
-      StopMotor()
-      Motor.StartSync("AD", -50, 50)
-      Program.Delay(3000)
-      Motor.Stop("AD", "True")
-      StopMotor()
-      target = 90
-      PIDGyroTurning()
+      DepositingCars()
       If i <> 5 Then
         PIDLineTrackingTillLine()
         StopMotor()
@@ -825,7 +756,7 @@ Sub CollectParkedCars
       EndIf
     EndIf
   EndIf
-  If collectRed = "True" Then
+  If collectRed Then
     degree = 400 
     PIDLineTracking()
     Turn180()
@@ -854,17 +785,19 @@ Sub CollectParkedCars
       degree = 100
       PIDLineTracking()
       PIDLineTrackingTillLine()
-      If collectRed Then
-        If parkingLots[i+1] = "Red" Then
-          deposit = "Left"
-          DepositingCars()
-          collectRed = "False"
-        ElseIf parkingLots[i+5] = "Red" Then
-          deposit = "Right"
-          DepositingCars()
-          collectRed = "False"
-        EndIf
-      EndFor
+      If parkingLots[i+1] = "Red" Then
+        deposit = "Left"
+        collect1stBatt = "True"
+        DepositingCars()
+        parkingLot[i+1] = "Red"
+        collectRed = "False"
+      ElseIf parkingLots[i+5] = "Red" Then
+        deposit = "Right"
+        collect1stBatt = "True"
+        DepositingCars()
+        parkingLot[i+5] = "Red"
+        collectRed = "False"
+      EndIf
     EndFor
   EndIf
   If collectBlueGreen = "True" Then
@@ -916,44 +849,73 @@ Sub CollectParkedCars
   EndIf
 EndSub
 Sub DepositParkedCars1
+  collectBlueGreen = "True"
+  battery[1] = "Deposited"
+  battery[2] = "Taken"
+  noOfBluegreen = 2
   If collectBlueGreen Then
+    Motor.StartSync("AD", -25, 25)
+    Program.Delay(1000)
+    StopMotor()
     degree = 100
     PIDLineTracking()
     PIDLineTrackingTillLine()
-    degree = 100
+    degree = 300
     PIDLineTracking()
     PIDLineTrackingTillLine()
+    speed = 20
     degree = 60
     PIDGyroStraight()
+    Motor.StartSync("AD", -25, 25)
+    Program.Delay(1000)
+    StopMotor()
     target = 90
     PIDGyroTurning()
     PIDLineTrackingTillLine()
-    Motor.Move("C", 20, 320, "True")
+    Motor.Move("C", -40, 320, "True")
     Motor.StartSync("BC", -20, -20)
     Program.Delay(1000)
+    StopMotor()
     If noOfBluegreen = 2 Then
       If battery[1] = "Taken" Then
-        Motor.Move("A", 20, 20, "True")
-        degree = 60
-        PIDGyroStraight()
-        Motor.Start("A", -60)
-        Program.Delay(1000)
-        PIDGyroStraightTillLine()
-        degree = 130
-        PIDGyroStraight()
-      ElseIf battery[2] = "Taken" Then
-        Motor.Move("D", 20, -20, "True")
-        degree = 60
-        PIDGyroStraight()
-        Motor.Start("D", 60)
-        Program.Delay(1000)
-        PIDGyroStraightTillLine()
-        degree = 130
-        PIDGyroStraight()
+        deposit1 = "A"
+        deposit2 = "D"
+        deposit3 = -1
+      Else
+        deposit1 = "D"
+        deposit2 = "A"
+        deposit3 = 1
       EndIf
+      Motor.Move(deposit1, deposit3*-20, 50, "True")
+      degree = 50
+      PIDGyroStraight()
+      StopMotor()
+      Motor.Start(deposit1, deposit3*60)
+      Program.Delay(1000)
+      StopMotor()
+      ' PIDGyroStraightTillLine()
+      degree = 100
+      PIDGyroStraight()
       target = -90
       PIDGyroTurning()
       PIDGyroStraightTillLine()
+      degree = 350
+      PIDLineTracking()
+      Motor.StartSync("BC", 20, 20)
+      Program.Delay(1000)
+      Motor.Move("C", -40, 320, "True")
+      Motor.StartSync("BC", -20, -20)
+      Program.Delay(1000)
+      Motor.Move(deposit2, 20, deposit3*20, "True")
+      degree = 60
+      PIDGyroStraight()
+      Motor.Start(deposit2, deposit3*-60)
+      StopMotor()
+      degree = 20
+      PIDGyroStraight()
+      Motor.Move("B", 40, 320, "True")
+      PIDLineTrackingTillLine2()
+      Motor.Move("B", 40, 320, "True")
     Else
       If bluegreencar2[1] = "Left" Then
         Motor.Move("A", 20, 20, "True")
@@ -985,151 +947,25 @@ Sub DepositParkedCars1
       PIDGyroTurning()
     EndIf
   Else
-    PIDLineTrackingTillLine()
     degree = 100
     PIDLineTracking()
-    target = -90
-    PIDGyroTurning()
-  EndIf
-EndSub
-Sub CollectionOfParkedCars
-  Program.Delay(500)
-  speed = 15
-  If bluegreencar1[collect] > 4 Then
-    direction = "Left"
-  Else
-    direction = "Right"
-  EndIf
-  LCD.Clear()
-  LCD.write(1, 1, bluegreencar2[collect])
-  LCD.write(1, 10, direction)
-  Program.Delay(2000)
-  If (bluegreencar2[collect] = "Left" And direction = "Right") Or (bluegreencar2[collect] = "Right" And direction = "Left") Then
+    PIDLineTrackingTillLine()
+    Speaker.NOTE(50, "C4", 200)
     degree = 100
-  ElseIf (bluegreencar2[collect]  = "Right" And direction = "Right") Or (bluegreencar2[collect]  = "Left" And direction = "Left") Then
-    degree = 15
-  EndIf
-  PIDLineTracking()
-  If direction = "Left" Then
-    target = 90.0
-  ElseIf direction = "Right" Then
-    target = -90.0
-  EndIf
-  speed = 5
-  PIDGyroTurning()
-  StopMotor()
-  Program.Delay(1000)
-  speed = 10
-  If bluegreencar2[collect] = "Left" Then
-    side1 = "A"
-    side2 = 1
-  Else
-    side1 = "D"
-    side2 = -1
-  EndIf
-  If direction = "Left" Then
-    degree = -180
-  Else
-    degree = -60
-  EndIf
-  Motor.Start(side1, side2*30)
-  Program.Delay(500)
-  StopMotor()
-  PIDGyroReverse()
-  StopMotor()
-  Program.Delay(500)
-  Motor.Start(side1, side2*-50)
-  Program.Delay(1000)
-  StopMotor()
-  Motor.Move(side1, side2*100, 50, "True")
-  StopMotor()
-  Program.Delay(1000)
-  degree = -60
-  PIDGyroReverse()
-  StopMotor()
-  Motor.Start(side1, side2*-100)
-  Program.Delay(1000)
-  StopMotor()
-  parkingLot[i] = "Empty"
-  Motor.StartSync("AD", -20, 20)
-  Program.Delay(2000)
-  StopMotor()
-  PIDGyroStraightTillLine()
-  StopMotor()
-  If direction = "Left" Then
-    degree = 130
-  Else
-    degree = 30
-  EndIf
-  PIDGyroStraight()
-  StopMotor()
-  Motor.StartSync("AD", -50, 50)
-  Program.Delay(3000)
-  StopMotor()
-  If direction = "Left" Then
-    target = -90
-  Else
+    PIDLineTracking()
+    PIDLineTrackingTillLine()
+    Speaker.NOTE(50, "C4", 200)
     target = 90
+    PIDGyroTurning()
+    degree = 390
+    PIDLineTracking2()
+    Motor.Move("C", 15, 320, "True")
+    degree = 390
+    PIDLineTracking2()
+    Motor.Move("C", 15, 320, "True")
+    Motor.StartSync("AD", -25, 25)
+    Program.Delay(1000)
   EndIf
-  PIDGyroTurning()
-EndSub
-Sub DepositingCars
-  degree = 70
-  PIDLineTracking()
-  StopMotor()
-  Program.Delay(500)
-  If deposit = "Left" Then
-    target = 90
-  ElseIf deposit = "Right" Then
-    target = -90
-  EndIf
-  PIDGyroTurning()
-  StopMotor()
-  Program.Delay(1000)
-  If deposit = "Left" Then
-    degree = -120
-  ElseIf deposit = "Right" Then
-    degree = -150
-  EndIf
-  speed = 15
-  PIDGyroReverse()
-  StopMotor()
-  parkingLot[i] = "Red"
-  If depositSide = "Left" Then
-    Motor.StartSync("AD", 20, 20)
-  Else
-    Motor.StartSync("AD", -20, -20)
-  EndIf
-  Program.Delay(1000)
-  StopMotor()
-  degree = 50
-  PIDGyroStraight()
-  StopMotor()
-  If (depositSide = "Left" And battery[1] = "Taken") Or (depositSide = "Right" And battery[2] = "Taken") Then
-    Motor.StartSync("AD", -100, 100)
-    Program.Delay(3000)
-    StopMotor()
-    For i = 1 To 2 Step 1
-      If depositSide = "Left" And battery[1] = "Taken" Then
-        Motor.Start("A", -120)
-      ElseIf depositSide = "Right" And battery[2] = "Taken" Then
-        Motor.Start("D", 120)
-      EndIf
-      Program.Delay(1000)
-      Motor.Stop("AD", "True")
-    EndFor
-    Motor.Stop("AD", "True")
-  EndIf
-  PIDGyroStraightTillLine()
-  StopMotor()
-  degree = 30
-  PIDGyroStraight()
-  StopMotor()
-  Motor.StartSync("AD", -50, 50)
-  Program.Delay(3000)
-  StopMotor()
-  target = 90
-  PIDGyroTurning()
 EndSub
 
 
@@ -1141,7 +977,11 @@ EndSub
 
 
 Sub CollectWaitingCars2
-  'write code here (Needs Work)
+  degree = 250
+  PIDGyroStraight()
+  Motor.StartSync("AD", 25, -25)
+  Program.Delay(1000)
+  PIDGyroStraightTillLine()
   waitingCars1 = 0
   waitingCars2 = 0
   For i = 1 To 8
@@ -1307,7 +1147,7 @@ Sub DepositWaitingCarsRight
         compartment[2] = "True"
       EndIf
       CollectionOfParkedCars()
-    ElseIf collectRed = "True" And (i = 9 Or i = 10) And parkingLot[i] = "Empty"
+    ElseIf collectRed = "True" And (i = 9 Or i = 10) And parkingLot[i] = "Empty" Then
       deposit = "Right"
       DepositingCars()
     EndIf
@@ -1524,6 +1364,172 @@ Sub Turn180
   Motor.Move("C", 15, 160, "True")
   Program.Delay(500)
 EndSub
+Sub Turn1802
+  Program.Delay(500)
+  Motor.Move("C", -15, 320, "True")
+  Program.Delay(500)
+  Motor.Move("B", 15, 160, "True")
+  Program.Delay(500)
+  Motor.Move("C", -15, 170, "True")
+  Program.Delay(500)
+EndSub
+Sub CollectionOfParkedCars
+  Program.Delay(500)
+  speed = 15
+  If bluegreencar1[collect] > 4 Then
+    direction = "Left"
+  Else
+    direction = "Right"
+  EndIf
+  LCD.Clear()
+  LCD.write(1, 1, bluegreencar2[collect])
+  LCD.write(1, 10, direction)
+  Program.Delay(2000)
+  If (bluegreencar2[collect] = "Left" And direction = "Right") Or (bluegreencar2[collect] = "Right" And direction = "Left") Then
+    degree = 100
+  ElseIf (bluegreencar2[collect]  = "Right" And direction = "Right") Or (bluegreencar2[collect]  = "Left" And direction = "Left") Then
+    degree = 15
+  EndIf
+  PIDLineTracking()
+  If direction = "Left" Then
+    target = 90.0
+  ElseIf direction = "Right" Then
+    target = -90.0
+  EndIf
+  speed = 5
+  PIDGyroTurning()
+  StopMotor()
+  Program.Delay(1000)
+  speed = 10
+  If bluegreencar2[collect] = "Left" Then
+    side1 = "A"
+    side2 = 1
+  Else
+    side1 = "D"
+    side2 = -1
+  EndIf
+  If direction = "Left" Then
+    degree = -180
+  Else
+    degree = -60
+  EndIf
+  Motor.Start(side1, side2*30)
+  Program.Delay(500)
+  StopMotor()
+  PIDGyroReverse()
+  StopMotor()
+  Program.Delay(500)
+  Motor.Start(side1, side2*-50)
+  Program.Delay(1000)
+  StopMotor()
+  Motor.Move(side1, side2*100, 50, "True")
+  StopMotor()
+  Program.Delay(1000)
+  degree = -60
+  PIDGyroReverse()
+  StopMotor()
+  Motor.Start(side1, side2*-100)
+  Program.Delay(1000)
+  StopMotor()
+  parkingLot[i] = "Empty"
+  Motor.StartSync("AD", -20, 20)
+  Program.Delay(2000)
+  StopMotor()
+  PIDGyroStraightTillLine()
+  StopMotor()
+  If direction = "Left" Then
+    degree = 130
+  Else
+    degree = 30
+  EndIf
+  PIDGyroStraight()
+  StopMotor()
+  Motor.StartSync("AD", -50, 50)
+  Program.Delay(3000)
+  StopMotor()
+  If direction = "Left" Then
+    target = -90
+  Else
+    target = 90
+  EndIf
+  PIDGyroTurning()
+EndSub
+Sub DepositingCars
+  degree = 70
+  PIDLineTracking()
+  StopMotor()
+  Program.Delay(500)
+  If deposit = "Left" Then
+    target = 90
+  ElseIf deposit = "Right" Then
+    target = -90
+  EndIf
+  PIDGyroTurning()
+  StopMotor()
+  Program.Delay(1000)
+  If deposit = "Left" Then
+    degree = -120
+  ElseIf deposit = "Right" Then
+    degree = -150
+  EndIf
+  speed = 15
+  PIDGyroReverse()
+  StopMotor()
+  If depositSide = "Left" Then
+    Motor.StartSync("AD", 20, 20)
+  Else
+    Motor.StartSync("AD", -20, -20)
+  EndIf
+  Program.Delay(1000)
+  StopMotor()
+  If collect1stBatt Then
+    degree = 50
+  Else
+    degree = 100
+  EndIf
+  PIDGyroStraight()
+  StopMotor()
+  If depositSide = "Left" Then
+    Motor.Start("A", -50)
+  Else
+    Motor.Start("D", 50)
+  EndIf
+  Program.Delay(1000)
+  StopMotor()
+  PIDGyroStraightTillLine()
+  StopMotor()
+  degree = 40
+  PIDGyroStraight()
+  StopMotor()
+  speed = 15
+  If depositSide = "Left" Then
+    Motor.Start("A", 120)
+  Else
+    Motor.Start("D", -120)
+  EndIf
+  Program.Delay(500)
+  StopMotor()
+  degree = -60
+  PIDGyroReverse()
+  StopMotor()
+  If depositSide = "Left" Then
+    Motor.Start("A", -120)
+  Else
+    Motor.Start("D", 120)
+  EndIf
+  Program.Delay(1500)
+  StopMotor()
+  degree = 60
+  PIDGyroStraight()
+  degree = 30
+  PIDGyroStraight()
+  StopMotor()
+  Motor.StartSync("AD", -50, 50)
+  Program.Delay(3000)
+  StopMotor()
+  target = 90
+  PIDGyroTurning()
+EndSub
 
 
 
@@ -1532,10 +1538,10 @@ EndSub
 
 'Code
 Motor.Invert("B")
-CollectBatteries()
-CollectWaitingCars1()
-DepositWaitingCars()
-CollectParkedCars()
+' CollectBatteries()
+' CollectWaitingCars1()
+' DepositWaitingCars()
+' CollectParkedCars()
 DepositParkedCars1()
 CollectWaitingCars2()
 
