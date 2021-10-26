@@ -12,7 +12,7 @@ EndFor
 For i = 1 To 12
   parkingLot[i] = "Not Checked" '(The 12 Parking Lots)
 EndFor
-'Not taken, Taken, Deposited (Numbered from Left to Right)
+'OPTIONS: Not taken, Taken, Deposited (Numbered from Left to Right)
 For i = 1 To 4
   battery[i] = "Not Taken" '(Battery)
 EndFor
@@ -196,7 +196,7 @@ Sub PIDGyroTurning
   LCD.Clear()
   target = 0
 EndSub
-'[2] = Right sensor = Port 3
+
 
 Sub PIDLineTrackingTillLine
   TotalRGBTH = 240
