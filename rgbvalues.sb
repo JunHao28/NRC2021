@@ -5,9 +5,9 @@ While "True"
     valueLeft = Sensor.ReadRaw(2, 3)
     LCD.Clear()
     LCD.write(1, 1, valueLeft[0])
-    LCD.write(20, 1, valueRight[0])
+    LCD.write(30, 1, valueRight[0])
     LCD.write(1, 20, valueLeft[1])
-    LCD.write(20, 20, valueRight[1])
+    LCD.write(30, 20, valueRight[1])
     LCD.write(1, 40, valueLeft[2])
-    LCD.write(20, 40, valueRight[2])
+    LCD.write(30, 40, valueRight[2])
 EndWhile

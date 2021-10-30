@@ -204,7 +204,7 @@ EndSub
 
 
 Sub PIDLineTrackingTillLine
-  TotalRGBTH = 270
+  TotalRGBTH = 200
   Last_Error = 0
   TP = 25
   Kp = 0.008
@@ -232,7 +232,7 @@ Sub PIDLineTrackingTillLine
   StopMotor()
 EndSub
 Sub PIDLineTrackingTillLine2
-  TotalRGBTH = 270
+  TotalRGBTH = 200
   Last_Error = 0
   TP = 30
   Kp = 0.008
@@ -261,7 +261,7 @@ Sub PIDLineTrackingTillLine2
   StopMotor()
 EndSub
 Sub PIDLineTracking
-  TotalRGBTH = 250
+  TotalRGBTH = 200
   Last_Error = 0
   TP = 30
   Kp = 0.008
@@ -293,7 +293,7 @@ Sub PIDLineTracking2
   StopMotor()
 EndSub
 Sub PIDLineTracking3
-  TotalRGBTH = 240
+  TotalRGBTH = 200
   Last_Error = 0
   TP = 30
   Kp = 0.008
@@ -549,7 +549,7 @@ Sub CollectWaitingCars1
   StopMotor()
   gyroerror = Sensor.ReadRawValue(1, 0) 
 EndSub
-Sub DepositWaitingCars
+Sub DepositWaitingCars1
   Motor.StartSync("AD", -20, 20)
   Program.Delay(1000)
   waitingCars[1] = "Green"
@@ -581,7 +581,7 @@ Sub DepositWaitingCars
   PIDLineTrackingTillLine()
   StopMotor()
   For i = 1 To 4
-    Motor.Move("B", 20, 20, "True")
+    Motor.Move("B", 20, 10, "True")
     StopMotor()
     Program.Delay(80)
     colour[1] = i
@@ -638,8 +638,12 @@ Sub DepositWaitingCars
   Motor.StartSync("BC", -35, -35)
   Program.Delay(2000)
   gyroerror = Sensor.ReadRawValue(1, 0) + 90
+  StopMotor()
+  Motor.StartSync("AD", -25, 25)
+  Program.Delay(1000)
+  StopMotor()
   For i = 8 To 5 Step -1
-    Motor.Move("B", 20, 20, "True")
+    Motor.Move("B", 20, 10, "True")
     StopMotor()
     Program.Delay(80)
     colour[1] = i
@@ -695,7 +699,7 @@ Sub DepositWaitingCars
   startNumber = 1
   endNumber = 8
 EndSub
-Sub CollectParkedCars1
+Sub CollectParkedCars
   collect1 = ""
   collect2 = 0
   collectBlueGreen = "False"
@@ -1404,7 +1408,7 @@ Sub Turn1802
   Program.Delay(200)
 EndSub
 Sub CollectionOfParkedCars
-  Program.Delay(500)
+  Program.Delay(200)
   speed = 15
   If bluegreencar1[collect] > 4 Then
     direction = "Left"
@@ -1412,14 +1416,14 @@ Sub CollectionOfParkedCars
     direction = "Right"
   EndIf
   If wallblock Then
-    Motor.Move("C", -15, 160, "True")
-    Motor.Move("B", -15, 160, "True")
+    Motor.Move("C", -25, 150, "True")
+    Motor.Move("B", -25, 150, "True")
     PIDLineTrackingTillLine2()
   EndIf
   If (bluegreencar2[collect] = "Left" And direction = "Right") Or (bluegreencar2[collect] = "Right" And direction = "Left") Then
-    degree = 100
+    degree = 110
   ElseIf (bluegreencar2[collect]  = "Right" And direction = "Right") Or (bluegreencar2[collect]  = "Left" And direction = "Left") Then
-    degree = 30
+    degree = 40
   EndIf
   PIDLineTracking()
   StopMotor()
@@ -1432,7 +1436,7 @@ Sub CollectionOfParkedCars
   PIDGyroTurning()
   StopMotor()
   Program.Delay(1000)
-  speed = 10
+  speed = 20
   If bluegreencar2[collect] = "Left" Then
     side1 = "A"
     side2 = 1
@@ -1489,13 +1493,13 @@ Sub CollectionOfParkedCars
   Program.Delay(500)
   StopMotor()
   If wallblock Then
-    Motor.Move("B", 15, 160, "True")
-    Motor.Move("C", 15, 160, "True")
+    Motor.Move("B", 25, 150, "True")
+    Motor.Move("C", 25, 150, "True")
   EndIf
   wallblock = "False"
 EndSub
 Sub DepositingCars
-  degree = 70
+  degree = 100
   PIDLineTracking()
   StopMotor()
   If deposit = "Left" Then
@@ -1503,7 +1507,7 @@ Sub DepositingCars
   ElseIf deposit = "Right" Then
     target = -90
   EndIf
-  turningSpeed = 10
+  turningSpeed = 20
   PIDGyroTurning()
   If deposit = "Left" Then
     degree = -120
@@ -1520,9 +1524,9 @@ Sub DepositingCars
   EndIf
   StopMotor()
   If collect1stBatt Then
-    degree = 50
+    degree = 40
   Else
-    degree = 80
+    degree = 70
   EndIf
   PIDGyroStraight()
   StopMotor()
@@ -1564,9 +1568,9 @@ Sub DepositingCars
   StopMotor()
   target = 90
   PIDGyroTurning()
-  Program.Delay(500)
   Motor.Move("B", 25, 100, "True")
   Motor.Move("C", 25, 100, "True")
+  Program.Delay(500)
 EndSub
 
 
@@ -1580,8 +1584,8 @@ Motor.Invert("B")
 
 ' CollectBatteries()
 ' CollectWaitingCars1()
-DepositWaitingCars()
-CollectParkedCars1()
+DepositWaitingCars1()
+CollectParkedCars()
 DepositParkedCars1()
 CollectWaitingCars2()
 ' DepositWaitingCars2()
