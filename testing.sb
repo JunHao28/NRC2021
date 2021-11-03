@@ -1,0 +1,3 @@
+
+Motor.Stop("AD", "True")
+Program.Delay(1000)
