@@ -26,7 +26,7 @@ Sub PIDGyroTurning
     Else
       TP = 7
     EndIf
-    Motor.StartSync("BC", Math.Max(Math.Min(steerTurn+TP,turningSpeed),-turningSpeed), Math.Max(Math.Min(-steerTurn+TP,turningSpeed),-turningSpeed))
+    Motor.StartSync("BC", Math.Max(Math.Min(steerTurn+TP,turningSpeed),-turningSpeed), Math.Max(Math.Min(-(steerTurn+TP),turningSpeed),-turningSpeed))
     last_error = error
     LCD.Clear()
     LCD.write(1, 1, Sensor.ReadRawValue(1, 0) - gyroerror)
