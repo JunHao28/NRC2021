@@ -1,0 +1,52 @@
+Motor.Invert("B")
+trackingSpeed = 80
+degree = 10000
+PIDLineTracking()
+
+
+Sub ResetMotor
+  Motor.ResetCount("BC")
+EndSub
+Sub StopMotor
+  Motor.Stop("ABCD", "True")
+EndSub
+Sub CloseArm
+  Motor.StartSync("AD", -100, 100)
+  Program.Delay(200)
+  StopMotor()
+EndSub
+Sub PIDLineTracking
+  TotalRGBTH = 160
+  Last_Error = 0
+  TP = trackingSpeed
+  Kp = 0.255
+  Ki = 0.005
+  Kd = 1.43
+  Intergal = 0
+  If TP >= 60 Then
+    Speaker.note(50, "C4", 200)
+    Kp = 0.255
+    Ki = 0.005
+    Kd = 1.43
+  EndIf
+  maxSpeed = 120
+  Sensor.SetMode(2, 4)
+  ResetMotor()
+  While Motor.GetCount("B") < degree
+    readVal()
+    PD()
+  EndWhile
+  degree = 0
+  StopMotor()
+EndSub
+Sub readVal
+  rawValue = Sensor.ReadRaw(2,3)
+  lightVal = rawValue[1]
+EndSub
+Sub PD
+  Error =  TotalRGBTH - lightVal
+  Intergal = Error + Intergal*0.5
+  Correction = (Error * Kp) + (Error - Last_Error)*Kd + Intergal*Ki
+  Motor.StartSync("BC",Math.Max(Math.Min((TP + Correction),maxSpeed),-maxSpeed),Math.Max(Math.Min((TP - Correction),maxSpeed),-maxSpeed))
+  Last_Error = Error
+EndSub
